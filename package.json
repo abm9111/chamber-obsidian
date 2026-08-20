@@ -1,0 +1,21 @@
+{
+  "name": "chamber-drift",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node esbuild.config.mjs production",
+    "dev": "node esbuild.config.mjs",
+    "test": "vitest run",
+    "check": "tsc --noEmit && eslint --no-error-on-unmatched-pattern src tests"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "esbuild": "^0.21.0",
+    "eslint": "^9.0.0",
+    "obsidian": "^1.5.7",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^2.0.0"
+  }
+}
