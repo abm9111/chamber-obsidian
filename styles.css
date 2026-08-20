@@ -1,0 +1,12 @@
+.chamber-drift-header { font-size: var(--font-ui-small); color: var(--text-muted); margin-bottom: 8px; }
+.chamber-drift-db { font-size: var(--font-ui-smaller); color: var(--text-faint); }
+.chamber-drift-stale { background: var(--background-modifier-error); color: var(--text-on-accent); border-radius: 4px; padding: 6px 8px; margin: 6px 0; }
+.chamber-drift-filter { font-size: var(--font-ui-small); margin: 4px 0; }
+.chamber-drift-belief { border-top: 1px solid var(--background-modifier-border); padding: 8px 0; }
+.chamber-drift-content { font-style: italic; margin-bottom: 2px; }
+.chamber-drift-count { font-size: var(--font-ui-smaller); color: var(--text-muted); }
+.chamber-drift-chip { font-family: var(--font-monospace); font-size: var(--font-ui-smaller); margin: 3px 0; }
+.chamber-drift-hash_mismatch a, .chamber-drift-not_found a { color: var(--text-error); }
+.chamber-drift-moved, .chamber-drift-gone { margin-top: 10px; font-size: var(--font-ui-small); color: var(--text-muted); }
+.chamber-drift-clean { color: var(--text-success); }
+.chamber-drift-banner { background: var(--background-secondary); border-left: 3px solid var(--text-error); padding: 6px 10px; margin-bottom: 8px; font-size: var(--font-ui-small); }
