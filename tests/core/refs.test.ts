@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { refToPath, resolveRef } from "../../src/core/refs";
+import { refToPath, resolveRef, resolvePath } from "../../src/core/refs";
 
 describe("refToPath", () => {
   it("strips the passage suffix and only the suffix", () => {
@@ -22,5 +22,11 @@ describe("resolveRef", () => {
   });
   it("suffix matches whole path segments only", () => {
     expect(resolveRef("a.md#p1", ["notes/za.md"])).toEqual({ kind: "unresolved" });
+  });
+});
+
+describe("resolvePath", () => {
+  it("does not re-strip an already-stripped key (extensionless #pN filename)", () => {
+    expect(resolvePath("weird/report#p3", ["weird/report#p3"])).toEqual({ kind: "exact", path: "weird/report#p3" });
   });
 });

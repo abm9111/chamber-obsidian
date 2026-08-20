@@ -1,5 +1,5 @@
 import type { Report } from "./report";
-import { refToPath, resolveRef } from "./refs";
+import { refToPath, resolvePath } from "./refs";
 
 /**
  * Inverts the report: which files does drift stand on? Drift-only by data
@@ -40,7 +40,7 @@ export function resolveIndex(index: Map<string, FileEntry>, vaultPaths: readonly
   const byVaultPath = new Map<string, FileEntry>();
   const unresolved = new Map<string, FileEntry>();
   for (const [refPath, e] of index) {
-    const r = resolveRef(refPath, vaultPaths);
+    const r = resolvePath(refPath, vaultPaths); // refPath is already stripped (buildFileIndex's key) — do not strip again
     if (r.kind === "unresolved") { unresolved.set(refPath, e); continue; }
     const prev = byVaultPath.get(r.path);
     if (prev) { prev.drifted.push(...e.drifted); prev.moved.push(...e.moved); }
