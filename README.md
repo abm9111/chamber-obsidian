@@ -17,8 +17,10 @@ Chamber Drift reads one file — the JSON report your own scheduled `chamber ver
 Chamber Drift never runs `chamber` itself. You schedule `chamber verify --json` outside Obsidian, writing its output atomically into the vault; the plugin only watches the file that lands there:
 
 ```
-chamber verify --json > "<vault>/_chamber/.report.tmp" ; mv "<vault>/_chamber/.report.tmp" "<vault>/_chamber/report.json"
+chamber verify --json > "<vault>/_chamber/.report.tmp" ; [ -s "<vault>/_chamber/.report.tmp" ] && mv "<vault>/_chamber/.report.tmp" "<vault>/_chamber/report.json"
 ```
+
+The `[ -s … ]` guard moves the temp file only when it's non-empty — so a run that silently produces nothing (wrong `PATH` under launchd, `chamber` missing) never clobbers the last good report — and it isn't `&&` because `verify` exits 1 exactly when it finds drift, which `&&` would treat as failure and discard the one report you actually need to see.
 
 The temp file sits next to its destination rather than in `/tmp` — `mv` is only atomic within a single filesystem, and `/tmp` is routinely a different one, which turns `mv` into copy-then-unlink and reintroduces exactly the half-written read this line exists to prevent. Replace `<vault>` with your vault's real filesystem path; neither launchd nor cron expand it for you.
 
@@ -36,7 +38,7 @@ Default report path is `_chamber/report.json`, configurable in settings. The lea
   <array>
     <string>/bin/sh</string>
     <string>-c</string>
-    <string>chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"</string>
+    <string>chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] && mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"</string>
   </array>
   <key>StartInterval</key><integer>900</integer>
 </dict>
@@ -48,7 +50,7 @@ Load it with `launchctl load ~/Library/LaunchAgents/com.chamber.verify.plist`.
 **cron**, every 15 minutes:
 
 ```cron
-*/15 * * * * chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" && mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"
+*/15 * * * * chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] && mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"
 ```
 
 Either way, `chamber ingest`/`chamber index-code` need to have run and beliefs need to be pinned (`chamber believe`) before there's anything for `verify` to check against. See Chamber's [`docs/CI_DRIFT_GATE.md`](https://github.com/abm9111/chamber/blob/main/docs/CI_DRIFT_GATE.md) for the full loop, including wiring the identical check into CI.

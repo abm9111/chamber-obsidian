@@ -20,8 +20,9 @@ each item, so this file is the record — not a separate log.
 
 2. **Write the first report; panel should update with no reload.** With
    the panel still open, run the report one-liner for real against the
-   scratch vault (`chamber verify --json > ".../.report.tmp" ; mv
-   ".../.report.tmp" ".../report.json"`). Do not touch Obsidian.
+   scratch vault (`chamber verify --json > ".../.report.tmp" ; [ -s
+   ".../.report.tmp" ] && mv ".../.report.tmp" ".../report.json"`). Do
+   not touch Obsidian.
    **This is the day-1 "do vault events fire for a `.json` create/rename"
    check the design spec flagged as unverified — record which of these
    actually happened, not just whether the panel eventually updated:**
@@ -77,8 +78,12 @@ each item, so this file is the record — not a separate log.
    confirm the panel renders that chip as plain, non-clickable text ending
    in "(outside this vault)" — never silently linked to the wrong file.
 
-9. **Staleness warning.** In Settings, set "Staleness warning (hours)" to
-   something low (e.g. `0`) while a real report is already loaded. Expect
+9. **Staleness warning.** First, edit the scratch report's `generatedAt`
+   to an ISO string 3 hours in the past, so a 1-hour threshold has a
+   report old enough to actually trip it. In Settings, set "Staleness
+   warning (hours)" to something low (e.g. `1`) while that report is
+   loaded (values ≤ 0 are rejected and silently reset to the default —
+   the field does not re-render to show this; known rough edge). Expect
    the staleness banner to appear in the panel immediately, no reopen
    needed, with the "is the scheduled verify running?" wording. Reset the
    threshold back up and confirm the warning disappears immediately too.

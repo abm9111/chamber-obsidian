@@ -3,8 +3,14 @@ import type ChamberDriftPlugin from "../main";
 
 export const VIEW_TYPE_DRIFT = "chamber-drift-panel";
 
+// The `[ -s … ]` guard moves only a non-empty temp file: the redirect creates
+// the file even when the command never runs (wrong PATH under launchd), and an
+// unguarded mv then replaces the last known-good report with an empty one.
+// `&&` after verify would be the WRONG guard — verify exits 1 when drift
+// exists, so gating the move on exit status suppresses exactly the reports
+// that matter. Review caught both wrong forms shipping side by side.
 const CRON_LINE =
-  'chamber verify --json > "<vault>/_chamber/.report.tmp" ; mv "<vault>/_chamber/.report.tmp" "<vault>/_chamber/report.json"';
+  'chamber verify --json > "<vault>/_chamber/.report.tmp" ; [ -s "<vault>/_chamber/.report.tmp" ] && mv "<vault>/_chamber/.report.tmp" "<vault>/_chamber/report.json"';
 
 function ageText(ms: number | null, source: string): string {
   if (ms === null) return "age unknown";
