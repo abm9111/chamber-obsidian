@@ -19,7 +19,7 @@ export type SourceState =
 export class ReportSource {
   state: SourceState = { kind: "missing" };
   private listeners: Array<() => void> = [];
-  private lastRaw: string | null = null;
+  private inflight: Promise<void> = Promise.resolve();
 
   constructor(private app: App, private plugin: ChamberDriftPlugin) {}
 
@@ -41,15 +41,26 @@ export class ReportSource {
     void this.refresh();
   }
 
-  async refresh(): Promise<void> {
+  /**
+   * Serialized: concurrent triggers (a vault event landing on a poll tick)
+   * queue behind each other instead of interleaving. Without this, the
+   * earlier trigger's slower I/O could resolve last and overwrite fresher
+   * state with staler — a visible regression, not just a wasted render.
+   */
+  refresh(): Promise<void> {
+    this.inflight = this.inflight.then(() => this.doRefresh());
+    return this.inflight;
+  }
+
+  // Must never reject — the try/catch below turns every failure into an { kind: "error" } state, because a rejection here would poison the inflight chain and wedge every future refresh() behind it.
+  private async doRefresh(): Promise<void> {
     const path = this.plugin.settings.reportPath;
     const adapter = this.app.vault.adapter;
     let next: SourceState;
-    let raw: string | null = null;
     try {
       if (!(await adapter.exists(path))) next = { kind: "missing" };
       else {
-        raw = await adapter.read(path);
+        const raw = await adapter.read(path);
         const parsed = parseReport(raw);
         if (!parsed.ok) next = { kind: "error", error: parsed.error };
         else {
@@ -63,9 +74,15 @@ export class ReportSource {
     } catch (e) {
       next = { kind: "error", error: String(e) };
     }
-    const changed = raw !== this.lastRaw || next.kind !== this.state.kind;
-    this.lastRaw = raw;
+    // Always notify: consumers re-render idempotently and cheaply. An earlier
+    // version de-duplicated on raw content + state kind — and under-notified,
+    // because two things consumers display change with NO raw delta: age
+    // (a report crosses the staleness threshold by time alone, exactly when
+    // the scheduled verify has silently stopped) and the resolved index
+    // (a vault file appearing can resolve a previously-unresolved ref). A
+    // skipped render was this plugin's own failure mode — a silently stale
+    // panel — traded for saving a few DOM writes a minute.
     this.state = next;
-    if (changed) this.notify();
+    this.notify();
   }
 }
