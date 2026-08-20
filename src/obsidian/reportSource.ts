@@ -23,7 +23,20 @@ export class ReportSource {
 
   constructor(private app: App, private plugin: ChamberDriftPlugin) {}
 
-  onChange(cb: () => void): void { this.listeners.push(cb); }
+  /**
+   * Returns an unsubscribe. Views register on open and MUST unregister on
+   * close: a panel is constructed anew each time its leaf reopens, and an
+   * earlier version registered in the constructor with no way to leave —
+   * every close/reopen leaked a listener rendering into a detached DOM tree
+   * for the rest of the session.
+   */
+  onChange(cb: () => void): () => void {
+    this.listeners.push(cb);
+    return () => {
+      const i = this.listeners.indexOf(cb);
+      if (i >= 0) this.listeners.splice(i, 1);
+    };
+  }
 
   notify(): void {
     for (const cb of this.listeners) {

@@ -61,6 +61,23 @@ describe("ReportSource", () => {
     expect(source.state.kind).toBe("loaded");
   });
 
+  it("unsubscribe stops callbacks", async () => {
+    const source = makeSource({
+      exists: async () => true,
+      read: async () => JSON.stringify({ beliefs: [] }),
+      stat: async () => ({ mtime: Date.now() }),
+    });
+    let count = 0;
+    const unsubscribe = source.onChange(() => { count++; });
+
+    await source.refresh();
+    expect(count).toBe(1);
+
+    unsubscribe();
+    await source.refresh();
+    expect(count).toBe(1);
+  });
+
   it("refreshes serialize in enqueue order", async () => {
     const firstJson = JSON.stringify({ beliefs: [{ beliefId: "first" }] });
     const secondJson = JSON.stringify({ beliefs: [{ beliefId: "second" }] });

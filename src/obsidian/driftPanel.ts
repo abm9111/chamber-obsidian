@@ -16,14 +16,21 @@ function ageText(ms: number | null, source: string): string {
 
 export class DriftPanel extends ItemView {
   private fileFilter: string | null = null;
+  private unsubscribe: (() => void) | null = null;
   constructor(leaf: WorkspaceLeaf, protected plugin: ChamberDriftPlugin) {
     super(leaf);
-    this.plugin.source.onChange(() => this.render());
   }
   getViewType(): string { return VIEW_TYPE_DRIFT; }
   getDisplayText(): string { return "Chamber Drift"; }
   getIcon(): string { return "shield-alert"; }
-  async onOpen(): Promise<void> { this.render(); }
+  async onOpen(): Promise<void> {
+    this.unsubscribe = this.plugin.source.onChange(() => this.render());
+    this.render();
+  }
+  async onClose(): Promise<void> {
+    this.unsubscribe?.();
+    this.unsubscribe = null;
+  }
   setFileFilter(path: string | null): void { this.fileFilter = path; this.render(); }
 
   private openVaultFile(path: string): void {
@@ -80,24 +87,31 @@ export class DriftPanel extends ItemView {
       return;
     }
 
-    // vault path for a failure ref, via the resolved index (exact object identity
-    // is not needed — the resolved index was built from the same report).
-    const vaultPathOf = (refPath: string): string | null => {
+    // Identity match on the unstripped ref — the index stores refs verbatim,
+    // so equality is available and prefix-matching was a bug: a report entry
+    // whose refId and sourceRef both coerced to "" prefix-matched every pin
+    // in every file and rendered as a clickable link to whichever vault path
+    // the Map yielded first. Exact match makes the malformed case naturally
+    // unresolvable instead.
+    const vaultPathOf = (rawRef: string): string | null => {
       for (const [vp, entry] of resolved.byVaultPath) {
-        if (entry.drifted.some((d) => d.ref.startsWith(refPath)) || entry.moved.some((m) => m.from.startsWith(refPath))) return vp;
+        if (entry.drifted.some((d) => d.ref === rawRef) || entry.moved.some((m) => m.from === rawRef)) return vp;
       }
       return null;
     };
     const inFilter = (vaultPath: string | null): boolean => this.fileFilter === null || vaultPath === this.fileFilter;
 
     for (const b of drifted) {
+      const rows = b.failures.map((f) => ({ f, vp: vaultPathOf(f.sourceRef ?? f.refId) }));
+      const visible = rows.filter((r) => inFilter(r.vp));
+      // A filtered view must not show a belief whose every failure lives in
+      // some other file — the box-with-no-chips shell that shipped first
+      // showed every drifted belief vault-wide under any filter.
+      if (this.fileFilter !== null && visible.length === 0) continue;
       const box = el.createDiv({ cls: "chamber-drift-belief" });
       box.createEl("div", { cls: "chamber-drift-content", text: `“${b.content.length > 120 ? b.content.slice(0, 119) + "…" : b.content}”` });
       box.createEl("div", { cls: "chamber-drift-count", text: `${b.verified}/${b.total} pins verified` });
-      for (const f of b.failures) {
-        const refPath = (f.sourceRef ?? f.refId).replace(/#p\d+$/, "");
-        const vp = vaultPathOf(refPath);
-        if (!inFilter(vp)) continue;
+      for (const { f, vp } of visible) {
         const chip = box.createDiv({ cls: `chamber-drift-chip chamber-drift-${f.reason}` });
         const label = f.reason === "not_found" && f.sourceRef
           ? `not_found: minted against ${f.sourceRef} — whatever is there now is not what was cited`
