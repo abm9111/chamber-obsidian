@@ -38,7 +38,10 @@ Default report path is `_chamber/report.json`, configurable in settings. The lea
   <array>
     <string>/bin/sh</string>
     <string>-c</string>
-    <string>chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] && mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"</string>
+    <!-- && is XML-escaped below: a raw & inside a plist <string> is invalid
+         XML and launchd refuses the whole file. The escaped form round-trips
+         to the exact one-liner above. -->
+    <string>chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] &amp;&amp; mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"</string>
   </array>
   <key>StartInterval</key><integer>900</integer>
 </dict>
