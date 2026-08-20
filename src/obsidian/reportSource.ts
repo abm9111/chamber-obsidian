@@ -1,4 +1,4 @@
-import { TAbstractFile, type App } from "obsidian";
+import type { TAbstractFile, App } from "obsidian";
 import { parseReport, type Report } from "../core/report";
 import { reportAge, type AgeSource } from "../core/staleness";
 import { buildFileIndex, resolveIndex, type ResolvedIndex } from "../core/fileIndex";
@@ -24,7 +24,18 @@ export class ReportSource {
   constructor(private app: App, private plugin: ChamberDriftPlugin) {}
 
   onChange(cb: () => void): void { this.listeners.push(cb); }
-  notify(): void { for (const cb of this.listeners) cb(); }
+
+  notify(): void {
+    for (const cb of this.listeners) {
+      try { cb(); } catch (e) {
+        // A subscriber's render bug must cost that one render, not the source:
+        // before this guard, a single throwing listener rejected the inflight
+        // chain and permanently wedged every future refresh — the silently
+        // stale panel this file exists to prevent, caused by its own plumbing.
+        console.error("chamber-drift: onChange listener threw", e);
+      }
+    }
+  }
 
   start(): void {
     const onFs = (f: TAbstractFile | string): void => {
@@ -48,8 +59,12 @@ export class ReportSource {
    * state with staler — a visible regression, not just a wasted render.
    */
   refresh(): Promise<void> {
-    this.inflight = this.inflight.then(() => this.doRefresh());
-    return this.inflight;
+    const run = this.inflight.then(() => this.doRefresh());
+    // The stored chain link swallows rejections so one failure can never
+    // poison subsequent refreshes; the RETURNED promise does not, so an
+    // awaiting caller still sees its own failure.
+    this.inflight = run.catch(() => {});
+    return run;
   }
 
   // Must never reject — the try/catch below turns every failure into an { kind: "error" } state, because a rejection here would poison the inflight chain and wedge every future refresh() behind it.
