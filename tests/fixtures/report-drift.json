@@ -1,0 +1,70 @@
+{
+  "since": null,
+  "checked": 4,
+  "broken": 1,
+  "degraded": 0,
+  "unsourcedBeliefs": 0,
+  "goneFiles": [
+    {
+      "file": "/private/var/folders/hx/h2wh50711szfzgl3vzbhfc1m0000gn/T/chamber-fixture-LOQK81/notes/gone.md",
+      "passages": 1
+    }
+  ],
+  "relocatedPins": 2,
+  "generatedAt": "2026-08-20T20:40:21.395Z",
+  "beliefs": [
+    {
+      "beliefId": "blf_8c124f95543e2018",
+      "content": "section 3 stays put",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": [
+        {
+          "refId": "vdoc_499cba2c4ed6c37b",
+          "from": "policy.md#p3",
+          "to": "policy.md#p2",
+          "title": "policy › Policy › Section 3"
+        }
+      ]
+    },
+    {
+      "beliefId": "blf_3afb1d506e9409bd",
+      "content": "policy section 4 is settled",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": [
+        {
+          "refId": "vdoc_710bd7d81656396a",
+          "from": "policy.md#p4",
+          "to": "policy.md#p3",
+          "title": "policy › Policy › Section 4"
+        }
+      ]
+    },
+    {
+      "beliefId": "blf_dd21490422cb9f1f",
+      "content": "the gone note said things",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": []
+    },
+    {
+      "beliefId": "blf_77d4449c22774e55",
+      "content": "policy section 1 is settled",
+      "total": 1,
+      "verified": 0,
+      "failures": [
+        {
+          "refId": "vdoc_9f3162c444e7f4a4",
+          "reason": "hash_mismatch",
+          "sourceRef": "policy.md#p1",
+          "title": "policy › Policy › Section 2"
+        }
+      ],
+      "relocations": []
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "since": null,
+  "checked": 4,
+  "broken": 0,
+  "degraded": 0,
+  "unsourcedBeliefs": 0,
+  "goneFiles": [],
+  "relocatedPins": 0,
+  "generatedAt": "2026-08-20T20:40:21.211Z",
+  "beliefs": [
+    {
+      "beliefId": "blf_8c124f95543e2018",
+      "content": "section 3 stays put",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": []
+    },
+    {
+      "beliefId": "blf_3afb1d506e9409bd",
+      "content": "policy section 4 is settled",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": []
+    },
+    {
+      "beliefId": "blf_dd21490422cb9f1f",
+      "content": "the gone note said things",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": []
+    },
+    {
+      "beliefId": "blf_77d4449c22774e55",
+      "content": "policy section 1 is settled",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": []
+    }
+  ]
+}
