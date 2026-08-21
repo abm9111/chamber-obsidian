@@ -88,7 +88,12 @@ export class DriftPanel extends ItemView {
 
     const drifted = report.beliefs.filter((b) => b.failures.length > 0);
 
-    if (drifted.length === 0 && (report.relocatedPins ?? 0) === 0) {
+    // goneFiles must block the clean claim: a deleted pinned note produces a
+    // report with zero failures (its pins verify against stored content —
+    // chamber KL 5), and "every pinned source still says what it said" is
+    // false in exactly that state. The gone-files info block below is the
+    // honest rendering, so fall through to it.
+    if (drifted.length === 0 && (report.relocatedPins ?? 0) === 0 && report.goneFiles.length === 0) {
       el.createEl("p", { cls: "chamber-drift-clean", text: "No drift. Every pinned source still says what it said." });
       return;
     }

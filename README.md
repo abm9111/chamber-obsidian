@@ -26,37 +26,45 @@ The temp file sits next to its destination rather than in `/tmp` — `mv` is onl
 
 Default report path is `_chamber/report.json`, configurable in settings. The leading underscore, not a dot, is deliberate: Obsidian's vault index ignores dot-folders, so a dot-prefixed path gets no file-change events at all and falls back to a 30-second poll instead of updating live.
 
-**launchd** (macOS), every 15 minutes — save as `~/Library/LaunchAgents/com.chamber.verify.plist`:
+**The scheduled job needs `chamber ingest`, not just `chamber verify`.** `verify` only compares against what's already indexed — without a recurring `ingest`, the database never learns a note changed, and the panel stays green while citations quietly drift underneath it. Run `ingest` unconditionally ahead of `verify`, never `ingest && verify`: an `ingest` failure (a moved root, an unmounted volume) must not silently skip the check that matters.
+
+**launchd** (macOS), every 15 minutes — save as `~/Library/LaunchAgents/com.chamber.verify-obsidian.plist`. Filename and `Label` are `-obsidian`-suffixed on purpose: chamber's own daily notification job already owns the plain `com.chamber.verify` label (`deploy/launchd/com.chamber.verify.plist` in the chamber repo), and loading this job under that same label would silently replace it instead of adding a second one. The shell is `/bin/sh -lc`, a login shell, not `-c` — launchd's own default `PATH` excludes `/usr/local/bin` and `/opt/homebrew/bin`, so a bare `-c` can't find an npm-installed `chamber`, which is exactly the "wrong PATH" failure the `[ -s … ]` guard above exists to survive:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Label</key><string>com.chamber.verify</string>
+  <key>Label</key><string>com.chamber.verify-obsidian</string>
   <key>ProgramArguments</key>
   <array>
     <string>/bin/sh</string>
-    <string>-c</string>
+    <string>-lc</string>
     <!-- && is XML-escaped below: a raw & inside a plist <string> is invalid
          XML and launchd refuses the whole file. The escaped form round-trips
-         to the exact one-liner above. -->
-    <string>chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] &amp;&amp; mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"</string>
+         to the exact one-liner above, with the ingest step chained ahead of it. -->
+    <string>chamber ingest || echo "!! ingest FAILED (exit $?) - verifying against the corpus as it stands, which may be stale"; chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] &amp;&amp; mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"</string>
   </array>
   <key>StartInterval</key><integer>900</integer>
+  <key>StandardOutPath</key><string>/Users/you/Library/Logs/chamber-verify-obsidian.log</string>
+  <key>StandardErrorPath</key><string>/Users/you/Library/Logs/chamber-verify-obsidian.log</string>
 </dict>
 </plist>
 ```
 
-Load it with `launchctl load ~/Library/LaunchAgents/com.chamber.verify.plist`.
+Load it with `launchctl load ~/Library/LaunchAgents/com.chamber.verify-obsidian.plist`. A separate label from `com.chamber.verify` is deliberate — that job's desktop notification and this job's vault write are different consumers of the same `verify`, and one must not silently replace the other.
 
-**cron**, every 15 minutes:
+**cron**, every 15 minutes — same shape, same reasons, wrapped the same way so the job gets a real `PATH` on Linux too:
 
 ```cron
-*/15 * * * * chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] && mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"
+*/15 * * * * /bin/sh -lc 'chamber ingest || echo "!! ingest FAILED (exit $?) - verifying against the corpus as it stands, which may be stale"; chamber verify --json > "/Users/you/Vault/_chamber/.report.tmp" ; [ -s "/Users/you/Vault/_chamber/.report.tmp" ] && mv "/Users/you/Vault/_chamber/.report.tmp" "/Users/you/Vault/_chamber/report.json"' >> "$HOME/.local/state/chamber-verify-obsidian.log" 2>&1
 ```
 
-Either way, `chamber ingest`/`chamber index-code` need to have run and beliefs need to be pinned (`chamber believe`) before there's anything for `verify` to check against. See Chamber's [`docs/CI_DRIFT_GATE.md`](https://github.com/abm9111/chamber/blob/main/docs/CI_DRIFT_GATE.md) for the full loop, including wiring the identical check into CI.
+Create the log directory first (`mkdir -p ~/.local/state`) — a redirect into a directory that doesn't exist fails silently, and cron mails the error to a mailbox nobody reads.
+
+`chamber ingest` re-walks and re-embeds everything under the configured root on every run, not just what changed, so it's the expensive half of this job — unremarkable at 15 minutes for a personal vault; split the schedule (coarser `ingest`, tighter bare-`verify` one-liner) if it gets slow enough to notice. Full reasoning for the login shell, running `ingest` unconditionally rather than `ingest && verify`, and the `%`-in-crontab trap lives in chamber's [`docs/OBSIDIAN.md`](https://github.com/abm9111/chamber/blob/main/docs/OBSIDIAN.md) and [`deploy/SCHEDULING.md`](https://github.com/abm9111/chamber/blob/main/deploy/SCHEDULING.md) — read once there rather than let a second copy here drift out of sync with it.
+
+Either way, `chamber index-code` needs to have run too for any code citations, and beliefs need to be pinned (`chamber believe`) before there's anything for `verify` to check against. See chamber's [`docs/CI_DRIFT_GATE.md`](https://github.com/abm9111/chamber/blob/main/docs/CI_DRIFT_GATE.md) for the full loop, including wiring the identical check into CI.
 
 ## Mobile
 

@@ -33,7 +33,7 @@ try {
     ["policy section 1 is settled", "policy.md#p1"],   // will hash_mismatch (edited in place)
     ["policy section 4 is settled", "policy.md#p4"],   // will relocate (note shrinks, text survives)
     ["the gone note said things", "gone.md#p0"],       // its FILE will be deleted -> goneFiles
-    ["section 3 stays put", "policy.md#p3"],           // stays intact -> healthy belief entry
+    ["section 3 stays put", "policy.md#p3"],           // relocates too (p3->p2, index shift from deleting section 0) -> still a healthy belief entry, no failures
   ]) {
     const res = commitBelief(db, {
       type: "inference", text, sources: [pin(ref)],
