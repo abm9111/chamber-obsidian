@@ -73,11 +73,11 @@ export class DriftPanel extends ItemView {
 
     const { report, ageMs, ageSource, resolved } = s;
     const header = el.createDiv({ cls: "chamber-drift-header" });
-    header.createEl("div", {
+    header.createDiv({
       text: `checked ${ageText(ageMs, ageSource)} · ${report.checked ?? report.beliefs.length} conclusions · ` +
         `${report.broken ?? 0} broken · ${report.degraded ?? 0} degraded · ${report.relocatedPins ?? 0} moved`,
     });
-    if (report.database) header.createEl("div", { cls: "chamber-drift-db", text: report.database.split("/").pop() ?? "" });
+    if (report.database) header.createDiv({ cls: "chamber-drift-db", text: report.database.split("/").pop() ?? "" });
 
     if (ageMs !== null && ageMs > this.plugin.settings.stalenessHours * 3600_000) {
       el.createDiv({ cls: "chamber-drift-stale", text: `Report is ${ageText(ageMs, ageSource)} — is the scheduled verify running?` });
@@ -115,8 +115,8 @@ export class DriftPanel extends ItemView {
       if (this.fileFilter !== null && visible.length === 0) continue;
       shownBeliefs++;
       const box = el.createDiv({ cls: "chamber-drift-belief" });
-      box.createEl("div", { cls: "chamber-drift-content", text: `“${excerpt(b.content, 120)}”` });
-      box.createEl("div", { cls: "chamber-drift-count", text: `${b.verified}/${b.total} pins verified` });
+      box.createDiv({ cls: "chamber-drift-content", text: `“${excerpt(b.content, 120)}”` });
+      box.createDiv({ cls: "chamber-drift-count", text: `${b.verified}/${b.total} pins verified` });
       for (const { f, vp } of visible) {
         const chip = box.createDiv({ cls: `chamber-drift-chip chamber-drift-${f.reason}` });
         const label = f.reason === "not_found" && f.sourceRef
@@ -139,14 +139,14 @@ export class DriftPanel extends ItemView {
       if (movedRows.length > 0) {
         const det = el.createEl("details", { cls: "chamber-drift-moved" });
         det.createEl("summary", { text: `${movedRows.length} passage(s) found at a new position — support intact where noted` });
-        for (const r of movedRows) det.createEl("div", { text: `moved: ${r.from} → ${r.to ?? "?"}` });
+        for (const r of movedRows) det.createDiv({ text: `moved: ${r.from} → ${r.to ?? "?"}` });
       }
     }
     const goneVisible = report.goneFiles.filter((g) => goneFileMatchesFilter(g.file, this.fileFilter));
     if (goneVisible.length > 0) {
       const det = el.createEl("details", { cls: "chamber-drift-gone" });
       det.createEl("summary", { text: `${goneVisible.length} pinned file(s) no longer on disk — pins verify against stored content only` });
-      for (const g of goneVisible) det.createEl("div", { text: `${g.file} (${g.passages} passage(s))` });
+      for (const g of goneVisible) det.createDiv({ text: `${g.file} (${g.passages} passage(s))` });
     }
 
     if (shownBeliefs === 0 && shownMoved === 0 && goneVisible.length === 0) {

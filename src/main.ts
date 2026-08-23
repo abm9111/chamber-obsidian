@@ -10,7 +10,10 @@ export default class ChamberDriftPlugin extends Plugin {
   private banner!: NoteBanner;
 
   async onload(): Promise<void> {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    // loadData() is typed `any`; spreading it directly is the unsafe
+    // assignment the directory's type-checked lint flags. Narrow it once.
+    const stored = (await this.loadData()) as Partial<ChamberDriftSettings> | null;
+    this.settings = { ...DEFAULT_SETTINGS, ...(stored ?? {}) };
     this.source = new ReportSource(this.app, this);
     this.registerView(VIEW_TYPE_DRIFT, (leaf: WorkspaceLeaf) => new DriftPanel(leaf, this));
     this.addRibbonIcon("shield-alert", "Chamber Drift", () => void this.activatePanel());
@@ -33,7 +36,10 @@ export default class ChamberDriftPlugin extends Plugin {
       return;
     }
     await leaf.setViewState({ type: VIEW_TYPE_DRIFT, active: true });
-    this.app.workspace.revealLeaf(leaf);
+    // revealLeaf returns a Promise since Obsidian 1.7.2 — which is also why
+    // the manifest's minAppVersion is 1.7.2: declaring 1.5.0 while calling
+    // the promising signature was the directory review's one hard Error.
+    await this.app.workspace.revealLeaf(leaf);
     const view = leaf.view;
     if (view instanceof DriftPanel) view.setFileFilter(filterPath);
   }

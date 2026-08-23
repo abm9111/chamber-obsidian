@@ -1,8 +1,8 @@
 {
   "id": "chamber-drift",
   "name": "Chamber Drift",
-  "version": "1.0.0",
-  "minAppVersion": "1.5.0",
+  "version": "1.0.1",
+  "minAppVersion": "1.7.2",
   "description": "Shows which of your conclusions lost support when notes changed \u2014 renders the drift report written by Chamber's scheduled verify.",
   "author": "abm9111",
   "authorUrl": "https://github.com/abm9111",
