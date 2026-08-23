@@ -3,8 +3,8 @@
   "name": "Chamber Drift",
   "version": "1.0.0",
   "minAppVersion": "1.5.0",
-  "description": "Shows which of your conclusions lost support when notes changed — renders the drift report written by Chamber's scheduled verify.",
+  "description": "Shows which of your conclusions lost support when notes changed \u2014 renders the drift report written by Chamber's scheduled verify.",
   "author": "abm9111",
-  "authorUrl": "https://github.com/abm9111/chamber",
+  "authorUrl": "https://github.com/abm9111",
   "isDesktopOnly": false
 }
