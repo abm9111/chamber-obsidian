@@ -37,4 +37,25 @@ describe("parseReport", () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/too large/);
   });
+  it("coerces wrong-typed leaves instead of throwing", () => {
+    const r = parseReport(JSON.stringify({
+      beliefs: [{ beliefId: 1, content: 2, total: "3", verified: null, failures: [{ refId: true, reason: 4 }], relocations: [{ from: 5 }] }],
+      goneFiles: [{ file: 9, passages: "nope" }],
+    }));
+    if (!r.ok) throw new Error(r.error);
+    expect(r.report.beliefs[0]).toEqual({
+      beliefId: "", content: "", total: 0, verified: 0,
+      failures: [{ refId: "", reason: "", sourceRef: null, title: null }],
+      relocations: [{ refId: "", from: "", to: null, title: null }],
+    });
+    expect(r.report.goneFiles).toEqual([{ file: "", passages: 0 }]);
+  });
+  it("drops non-finite top-level counters", () => {
+    const r = parseReport(JSON.stringify({ beliefs: [], checked: Infinity, broken: NaN, degraded: Infinity, relocatedPins: Number.POSITIVE_INFINITY }));
+    if (!r.ok) throw new Error(r.error);
+    expect(r.report.checked).toBeUndefined();
+    expect(r.report.broken).toBeUndefined();
+    expect(r.report.degraded).toBeUndefined();
+    expect(r.report.relocatedPins).toBeUndefined();
+  });
 });

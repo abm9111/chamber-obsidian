@@ -1,6 +1,6 @@
 .chamber-drift-header { font-size: var(--font-ui-small); color: var(--text-muted); margin-bottom: 8px; }
 .chamber-drift-db { font-size: var(--font-ui-smaller); color: var(--text-faint); }
-.chamber-drift-stale { background: var(--background-modifier-error); color: var(--text-on-accent); border-radius: 4px; padding: 6px 8px; margin: 6px 0; }
+.chamber-drift-stale { background: var(--background-secondary); color: var(--text-normal); border-left: 3px solid var(--text-error); border-radius: 4px; padding: 6px 8px; margin: 6px 0; }
 .chamber-drift-filter { font-size: var(--font-ui-small); margin: 4px 0; }
 .chamber-drift-belief { border-top: 1px solid var(--background-modifier-border); padding: 8px 0; }
 .chamber-drift-content { font-style: italic; margin-bottom: 2px; }

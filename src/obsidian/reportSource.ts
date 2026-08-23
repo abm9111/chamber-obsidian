@@ -2,6 +2,7 @@ import type { TAbstractFile, App } from "obsidian";
 import { parseReport, type Report } from "../core/report";
 import { reportAge, type AgeSource } from "../core/staleness";
 import { buildFileIndex, resolveIndex, type ResolvedIndex } from "../core/fileIndex";
+import { isEventBlindPath, vaultPathsEqual } from "../core/paths";
 import type ChamberDriftPlugin from "../main";
 
 export type SourceState =
@@ -14,7 +15,8 @@ export type SourceState =
  * rename-over surfaces as any of the three depending on the platform watcher —
  * AND runs a 5-minute safety poll regardless: a missed event is a silently
  * stale panel, which is this product's own failure mode pointed at itself.
- * Dot-paths get a 30s poll instead of events (Obsidian raises none for them).
+ * Dot-paths get a 30s poll instead of events (Obsidian raises none for them,
+ * including a dot-folder in the middle of the path).
  */
 export class ReportSource {
   state: SourceState = { kind: "missing" };
@@ -53,14 +55,14 @@ export class ReportSource {
   start(): void {
     const onFs = (f: TAbstractFile | string): void => {
       const path = typeof f === "string" ? f : f.path;
-      if (path === this.plugin.settings.reportPath) void this.refresh();
+      if (vaultPathsEqual(path, this.plugin.settings.reportPath)) void this.refresh();
     };
     this.plugin.registerEvent(this.app.vault.on("create", onFs));
     this.plugin.registerEvent(this.app.vault.on("modify", onFs));
     this.plugin.registerEvent(this.app.vault.on("rename", (f, old) => { onFs(f); onFs(old); }));
     this.plugin.registerInterval(window.setInterval(() => void this.refresh(), 5 * 60_000));
     this.plugin.registerInterval(window.setInterval(() => {
-      if (this.plugin.settings.reportPath.startsWith(".")) void this.refresh();
+      if (isEventBlindPath(this.plugin.settings.reportPath)) void this.refresh();
     }, 30_000));
     void this.refresh();
   }

@@ -7,6 +7,8 @@
  * less than the minimum renders as "unreadable" — never a throw: this runs
  * inside the Obsidian UI process on every file change.
  */
+import { exceedsByteCap, utf8ByteLength } from "./text";
+
 export interface PinFailure { refId: string; reason: string; sourceRef?: string | null; title?: string | null }
 export interface Relocation { refId: string; from: string; to: string | null; title?: string | null }
 export interface BeliefEntry { beliefId: string; content: string; total: number; verified: number; failures: PinFailure[]; relocations: Relocation[] }
@@ -21,10 +23,12 @@ const arr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const str = (v: unknown): string => (typeof v === "string" ? v : "");
 const num = (v: unknown): number => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 const optStr = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
+const optNum = (v: unknown): number | undefined => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
 
 export function parseReport(raw: string): ParseResult {
-  if (raw.length > MAX_REPORT_BYTES) {
-    return { ok: false, error: `report too large (${(raw.length / 1024 / 1024).toFixed(1)} MB > 5 MB)` };
+  if (exceedsByteCap(raw, MAX_REPORT_BYTES)) {
+    const shown = raw.length > MAX_REPORT_BYTES ? raw.length : utf8ByteLength(raw);
+    return { ok: false, error: `report too large (${(shown / 1024 / 1024).toFixed(1)} MB > 5 MB)` };
   }
   let data: unknown;
   try { data = JSON.parse(raw); } catch (e) { return { ok: false, error: `not valid JSON: ${String(e)}` }; }
@@ -60,10 +64,8 @@ export function parseReport(raw: string): ParseResult {
     ok: true,
     report: {
       generatedAt: optStr(o.generatedAt), database: optStr(o.database),
-      checked: typeof o.checked === "number" ? o.checked : undefined,
-      broken: typeof o.broken === "number" ? o.broken : undefined,
-      degraded: typeof o.degraded === "number" ? o.degraded : undefined,
-      relocatedPins: typeof o.relocatedPins === "number" ? o.relocatedPins : undefined,
+      checked: optNum(o.checked), broken: optNum(o.broken),
+      degraded: optNum(o.degraded), relocatedPins: optNum(o.relocatedPins),
       goneFiles, beliefs,
     },
   };

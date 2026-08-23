@@ -1,4 +1,4 @@
-import { Plugin, WorkspaceLeaf } from "obsidian";
+import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
 import { ChamberDriftSettingTab, DEFAULT_SETTINGS, type ChamberDriftSettings } from "./settings";
 import { ReportSource } from "./obsidian/reportSource";
 import { DriftPanel, VIEW_TYPE_DRIFT } from "./obsidian/driftPanel";
@@ -27,8 +27,11 @@ export default class ChamberDriftPlugin extends Plugin {
 
   async activatePanel(filterPath: string | null = null): Promise<void> {
     const existing = this.app.workspace.getLeavesOfType(VIEW_TYPE_DRIFT)[0];
-    const leaf = existing ?? this.app.workspace.getRightLeaf(false);
-    if (!leaf) return;
+    const leaf = existing ?? this.app.workspace.getRightLeaf(true) ?? this.app.workspace.getLeaf(false);
+    if (!leaf) {
+      new Notice("Chamber Drift could not open a pane for the drift panel.");
+      return;
+    }
     await leaf.setViewState({ type: VIEW_TYPE_DRIFT, active: true });
     this.app.workspace.revealLeaf(leaf);
     const view = leaf.view;

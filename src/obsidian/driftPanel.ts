@@ -1,5 +1,8 @@
 import { ItemView, Platform, TFile, WorkspaceLeaf } from "obsidian";
 import type ChamberDriftPlugin from "../main";
+import { vaultPathForRef } from "../core/fileIndex";
+import { goneFileMatchesFilter } from "../core/paths";
+import { excerpt } from "../core/text";
 
 export const VIEW_TYPE_DRIFT = "chamber-drift-panel";
 
@@ -87,31 +90,22 @@ export class DriftPanel extends ItemView {
     }
 
     const drifted = report.beliefs.filter((b) => b.failures.length > 0);
+    const anyMoved = report.beliefs.some((b) => b.relocations.length > 0);
 
     // goneFiles must block the clean claim: a deleted pinned note produces a
     // report with zero failures (its pins verify against stored content —
     // chamber KL 5), and "every pinned source still says what it said" is
     // false in exactly that state. The gone-files info block below is the
     // honest rendering, so fall through to it.
-    if (drifted.length === 0 && (report.relocatedPins ?? 0) === 0 && report.goneFiles.length === 0) {
+    if (this.fileFilter === null && drifted.length === 0 && !anyMoved && report.goneFiles.length === 0) {
       el.createEl("p", { cls: "chamber-drift-clean", text: "No drift. Every pinned source still says what it said." });
       return;
     }
 
-    // Identity match on the unstripped ref — the index stores refs verbatim,
-    // so equality is available and prefix-matching was a bug: a report entry
-    // whose refId and sourceRef both coerced to "" prefix-matched every pin
-    // in every file and rendered as a clickable link to whichever vault path
-    // the Map yielded first. Exact match makes the malformed case naturally
-    // unresolvable instead.
-    const vaultPathOf = (rawRef: string): string | null => {
-      for (const [vp, entry] of resolved.byVaultPath) {
-        if (entry.drifted.some((d) => d.ref === rawRef) || entry.moved.some((m) => m.from === rawRef)) return vp;
-      }
-      return null;
-    };
+    const vaultPathOf = (rawRef: string): string | null => vaultPathForRef(rawRef, resolved);
     const inFilter = (vaultPath: string | null): boolean => this.fileFilter === null || vaultPath === this.fileFilter;
 
+    let shownBeliefs = 0;
     for (const b of drifted) {
       const rows = b.failures.map((f) => ({ f, vp: vaultPathOf(f.sourceRef ?? f.refId) }));
       const visible = rows.filter((r) => inFilter(r.vp));
@@ -119,8 +113,9 @@ export class DriftPanel extends ItemView {
       // some other file — the box-with-no-chips shell that shipped first
       // showed every drifted belief vault-wide under any filter.
       if (this.fileFilter !== null && visible.length === 0) continue;
+      shownBeliefs++;
       const box = el.createDiv({ cls: "chamber-drift-belief" });
-      box.createEl("div", { cls: "chamber-drift-content", text: `“${b.content.length > 120 ? b.content.slice(0, 119) + "…" : b.content}”` });
+      box.createEl("div", { cls: "chamber-drift-content", text: `“${excerpt(b.content, 120)}”` });
       box.createEl("div", { cls: "chamber-drift-count", text: `${b.verified}/${b.total} pins verified` });
       for (const { f, vp } of visible) {
         const chip = box.createDiv({ cls: `chamber-drift-chip chamber-drift-${f.reason}` });
@@ -134,17 +129,31 @@ export class DriftPanel extends ItemView {
       }
     }
 
-    if (this.plugin.settings.showRelocations && (report.relocatedPins ?? 0) > 0) {
-      const det = el.createEl("details", { cls: "chamber-drift-moved" });
-      det.createEl("summary", { text: `${report.relocatedPins} passage(s) found at a new position — support intact where noted` });
+    let shownMoved = 0;
+    if (this.plugin.settings.showRelocations) {
+      const movedRows: { from: string; to: string | null }[] = [];
       for (const b of report.beliefs) for (const r of b.relocations) {
-        det.createEl("div", { text: `moved: ${r.from} → ${r.to ?? "?"}` });
+        if (inFilter(vaultPathOf(r.from))) movedRows.push({ from: r.from, to: r.to });
+      }
+      shownMoved = movedRows.length;
+      if (movedRows.length > 0) {
+        const det = el.createEl("details", { cls: "chamber-drift-moved" });
+        det.createEl("summary", { text: `${movedRows.length} passage(s) found at a new position — support intact where noted` });
+        for (const r of movedRows) det.createEl("div", { text: `moved: ${r.from} → ${r.to ?? "?"}` });
       }
     }
-    if (report.goneFiles.length > 0) {
+    const goneVisible = report.goneFiles.filter((g) => goneFileMatchesFilter(g.file, this.fileFilter));
+    if (goneVisible.length > 0) {
       const det = el.createEl("details", { cls: "chamber-drift-gone" });
-      det.createEl("summary", { text: `${report.goneFiles.length} pinned file(s) no longer on disk — pins verify against stored content only` });
-      for (const g of report.goneFiles) det.createEl("div", { text: `${g.file} (${g.passages} passage(s))` });
+      det.createEl("summary", { text: `${goneVisible.length} pinned file(s) no longer on disk — pins verify against stored content only` });
+      for (const g of goneVisible) det.createEl("div", { text: `${g.file} (${g.passages} passage(s))` });
+    }
+
+    if (shownBeliefs === 0 && shownMoved === 0 && goneVisible.length === 0) {
+      el.createEl("p", {
+        cls: "chamber-drift-clean",
+        text: this.fileFilter ? "No drift on this note." : "No drift. Every pinned source still says what it said.",
+      });
     }
   }
 }

@@ -1,5 +1,6 @@
 import type { Report } from "./report";
 import { refToPath, resolvePath } from "./refs";
+import { excerpt } from "./text";
 
 /**
  * Inverts the report: which files does drift stand on? Drift-only by data
@@ -13,7 +14,6 @@ export interface MovedPin { beliefId: string; contentExcerpt: string; from: stri
 export interface FileEntry { drifted: DriftedPin[]; moved: MovedPin[] }
 
 const EXCERPT = 80;
-const excerpt = (s: string): string => (s.length > EXCERPT ? s.slice(0, EXCERPT - 1) + "…" : s);
 
 export function buildFileIndex(report: Report): Map<string, FileEntry> {
   const out = new Map<string, FileEntry>();
@@ -25,10 +25,10 @@ export function buildFileIndex(report: Report): Map<string, FileEntry> {
   for (const b of report.beliefs) {
     for (const f of b.failures) {
       const ref = f.sourceRef ?? f.refId; // not_found pins from old chambers have no position — key by id, labeled unresolvable downstream
-      entry(refToPath(ref)).drifted.push({ beliefId: b.beliefId, contentExcerpt: excerpt(b.content), reason: f.reason, ref, titleNow: f.title ?? null });
+      entry(refToPath(ref)).drifted.push({ beliefId: b.beliefId, contentExcerpt: excerpt(b.content, EXCERPT), reason: f.reason, ref, titleNow: f.title ?? null });
     }
     for (const r of b.relocations) {
-      entry(refToPath(r.from)).moved.push({ beliefId: b.beliefId, contentExcerpt: excerpt(b.content), from: r.from, to: r.to });
+      entry(refToPath(r.from)).moved.push({ beliefId: b.beliefId, contentExcerpt: excerpt(b.content, EXCERPT), from: r.from, to: r.to });
     }
   }
   return out;
@@ -47,4 +47,19 @@ export function resolveIndex(index: Map<string, FileEntry>, vaultPaths: readonly
     else byVaultPath.set(r.path, { drifted: [...e.drifted], moved: [...e.moved] });
   }
   return { byVaultPath, unresolved };
+}
+
+/**
+ * Identity match on the unstripped ref — the index stores refs verbatim,
+ * so equality is available and prefix-matching was a bug: a report entry
+ * whose refId and sourceRef both coerced to "" prefix-matched every pin
+ * in every file and rendered as a clickable link to whichever vault path
+ * the Map yielded first. Exact match makes the malformed case naturally
+ * unresolvable instead.
+ */
+export function vaultPathForRef(rawRef: string, resolved: ResolvedIndex): string | null {
+  for (const [vp, entry] of resolved.byVaultPath) {
+    if (entry.drifted.some((d) => d.ref === rawRef) || entry.moved.some((m) => m.from === rawRef)) return vp;
+  }
+  return null;
 }

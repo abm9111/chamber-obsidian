@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { parseReport } from "../../src/core/report";
-import { buildFileIndex, resolveIndex } from "../../src/core/fileIndex";
+import { buildFileIndex, resolveIndex, vaultPathForRef } from "../../src/core/fileIndex";
 
 const drift = (() => {
   const r = parseReport(readFileSync("tests/fixtures/report-drift.json", "utf8"));
@@ -40,5 +40,24 @@ describe("resolveIndex", () => {
     expect(res.byVaultPath.size).toBe(1);
     const merged = res.byVaultPath.get("notes/sub/a.md");
     expect(merged?.drifted.length).toBe(2);
+  });
+  it("keeps an extensionless #pN filename intact (strip once, then resolvePath)", () => {
+    const idx = buildFileIndex({ goneFiles: [], beliefs: [{
+      beliefId: "b", content: "c", total: 1, verified: 0, relocations: [],
+      failures: [{ refId: "r", reason: "hash_mismatch", sourceRef: "weird/report#p3#p1", title: null }],
+    }] });
+    const res = resolveIndex(idx, ["weird/report#p3"]);
+    expect(res.byVaultPath.has("weird/report#p3")).toBe(true);
+    expect(res.unresolved.size).toBe(0);
+  });
+  it("maps an unstripped ref onto its vault path by exact identity, not prefix", () => {
+    const idx = buildFileIndex({ goneFiles: [], beliefs: [{
+      beliefId: "b", content: "c", total: 1, verified: 0, relocations: [],
+      failures: [{ refId: "r", reason: "hash_mismatch", sourceRef: "notes/a.md#p1", title: null }],
+    }] });
+    const res = resolveIndex(idx, ["notes/a.md"]);
+    expect(vaultPathForRef("notes/a.md#p1", res)).toBe("notes/a.md");
+    expect(vaultPathForRef("", res)).toBeNull();
+    expect(vaultPathForRef("notes/a.md", res)).toBeNull();
   });
 });

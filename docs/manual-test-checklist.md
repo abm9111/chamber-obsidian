@@ -1,6 +1,6 @@
 # Chamber Drift — manual test checklist
 
-The 23 automated tests cover the pure logic in `src/core/` and the report
+The automated tests cover the pure logic in `src/core/` and the report
 source's concurrency guarantees; everything below only exists once Obsidian
 is rendering pixels, so it's checked by hand. Use a scratch vault, not one
 you rely on. Run desktop first, then the mobile pass at the end.
@@ -82,19 +82,20 @@ each item, so this file is the record — not a separate log.
    to an ISO string 3 hours in the past, so a 1-hour threshold has a
    report old enough to actually trip it. In Settings, set "Staleness
    warning (hours)" to something low (e.g. `1`) while that report is
-   loaded (values ≤ 0 are rejected and silently reset to the default —
-   the field does not re-render to show this; known rough edge). Expect
+   loaded. Commit the field with Enter or by clicking away — values ≤ 0 are
+   rejected and the field snaps back to the last saved number. Expect
    the staleness banner to appear in the panel immediately, no reopen
    needed, with the "is the scheduled verify running?" wording. Reset the
-   threshold back up and confirm the warning disappears immediately too.
+   threshold back up (same commit) and confirm the warning disappears immediately too.
 
 10. **Toggles live-update the UI.** With the panel open and a bannered
     note visible: flip "Show note banner" off — confirm any visible
     banner disappears immediately — then back on. Flip "Show relocations"
     off — confirm the collapsed moved-passages section disappears from
     the panel immediately, then back on. Change "Report path" to a
-    nonexistent path — confirm the panel switches to the setup state for
-    the new path; change it back and confirm it recovers.
+    nonexistent path and commit the field (Enter or click away) — confirm
+    the panel switches to the setup state for the new path; change it back
+    and confirm it recovers.
 
 11. **Plugin disable cleans up.** With a banner showing and the panel
     open, disable Chamber Drift from Community plugins. Expect the banner
