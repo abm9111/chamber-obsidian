@@ -101,10 +101,18 @@ See Chamber's [`docs/KNOWN_LIMITATIONS.md`](https://github.com/abm9111/chamber/b
 
 ## Screenshots
 
-<!-- screenshots added manually before registry PR -->
+Both taken from a live vault: the note was edited from "30 days" to "14 days"
+after a conclusion pinned the original passage.
 
-1. **Panel with drift** — the sidebar panel showing a broken pin and the collapsed relocations/gone-files sections.
-2. **Banner on a note** — the quiet banner on a note whose cited passage moved or broke.
+**The banner and the panel together** — the note shows today's text; the panel
+shows the conclusion still standing on yesterday's:
+
+![A note with the Chamber Drift banner, and the drift panel showing the broken pin](images/note-banner-and-panel.png)
+
+**The drift panel** — a broken pin with the position it was minted against and
+what occupies it now, plus the collapsed moved-passages section:
+
+![The drift panel: one broken conclusion, one relocated passage](images/drift-panel.png)
 
 ## License
 
