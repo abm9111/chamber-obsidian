@@ -123,8 +123,8 @@ See Chamber's [`docs/KNOWN_LIMITATIONS.md`](https://github.com/abm9111/chamber/b
 
 ## Screenshots
 
-Both taken from a live vault: the note was edited from "30 days" to "14 days"
-after a conclusion pinned the original passage.
+Both taken from the demo vault. `Retention.md` now says 14 days; a conclusion
+still stands on 30.
 
 **The banner and the panel together** — the note shows today's text; the panel
 shows the conclusion still standing on yesterday's:
