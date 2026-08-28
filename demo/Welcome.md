@@ -4,6 +4,8 @@ This folder is a tiny vault with a canned drift report already in it. You do not
 
 **Open this `demo/` folder as the vault**, not the plugin repository root. The plugin looks for `_chamber/report.json` at the vault root.
 
+The one problem: a conclusion is still in the vault after the thing it stood on moved. Sync, rename, delete, and two machines writing the same file are how that happens. Each click below is one of those causes. The panel is the same answer every time.
+
 ## Install the plugin
 
 1. Settings → Community plugins → Browse → search **Chamber Drift** → Install → Enable.
@@ -13,13 +15,14 @@ Listing: [community.obsidian.md/plugins/chamber-drift](https://community.obsidia
 
 ## What to click
 
-1. Open [[Retention]]. Expect a banner: a conclusion still stands on “30 days”; the note now says 14. Click **details**.
-2. Open the drift panel from the ribbon (shield-alert) if it is not already open. Expect two broken conclusions, one moved passage, and one gone file (`Archive.md` is missing on purpose).
+1. Open [[Retention]]. The note now says 14 days; a conclusion still stands on 30. That is a source that changed under a claim — the research-notes question. Click **details**.
+2. Open the drift panel from the ribbon (shield-alert) if it is not already open. Two broken conclusions (Retention + [[Onboarding]], a list that shrank), one moved passage (Refunds relocated, support intact), one gone file (`Archive.md` deleted on purpose). Rename, edit, and delete are the same panel.
 3. Desktop status bar should read `Drift 2`. Click it.
 4. Command palette: **Search drifted conclusions**, **Open next/previous drifted note**, **Copy drifted note wikilinks**.
-5. Open this note again. No banner — healthy notes stay quiet.
+5. Open this note again. No banner — a note with no lost support stays quiet.
+6. Empty `_chamber/report.json` and save. Last-good keeps the panel up. That is torn / placeholder / two-machine transport — named, not repaired.
 
-Then open [[Onboarding]] (the other drifted note) and walk next/prev between the two.
+Then walk next/prev between [[Retention]] and [[Onboarding]].
 
 ## If the panel says the report is stale
 

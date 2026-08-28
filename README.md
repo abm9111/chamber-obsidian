@@ -4,6 +4,8 @@ Shows which of your conclusions lost support when the notes under them changed.
 
 Chamber Drift is the Obsidian-side half of [Chamber](https://github.com/abm9111/chamber). Chamber's `verify` command hashes the passages a belief is pinned to and reports when one no longer says what it said at pin time; this plugin renders that report inside your vault. It does not run any check itself — see [What it will not do](#what-it-will-not-do).
 
+That is the same failure people hit as Sync history, a renamed heading under an embed, a deleted source, or two devices writing the report: a conclusion outlived its evidence. Chamber names the cause. It does not become a second Sync, a Bases formula, or a broken-links crawler.
+
 ## Try it in two minutes
 
 You do not need Chamber installed for this.
