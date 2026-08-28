@@ -6,11 +6,10 @@ This folder is a tiny vault with a canned drift report already in it. You do not
 
 ## Install the plugin
 
-Chamber Drift is not in the official community plugin list yet.
+1. Settings → Community plugins → Browse → search **Chamber Drift** → Install → Enable.
+2. Or [BRAT](https://github.com/TfTHacker/obsidian42-brat) → Add Beta Plugin → `abm9111/chamber-obsidian` if you want a GitHub build before the directory catches a new tag.
 
-1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat).
-2. BRAT → Add Beta Plugin → `abm9111/chamber-obsidian` → Add Plugin.
-3. Settings → Community plugins → enable **Chamber Drift**.
+Listing: [community.obsidian.md/plugins/chamber-drift](https://community.obsidian.md/plugins/chamber-drift).
 
 ## What to click
 

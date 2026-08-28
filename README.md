@@ -10,7 +10,7 @@ You do not need Chamber installed for this.
 
 1. Download [`chamber-drift-demo-vault.zip`](https://github.com/abm9111/chamber-obsidian/releases/latest) from the latest release, or clone this repo and use the [`demo/`](demo/) folder.
 2. In Obsidian: **Open folder as vault** → that unzipped folder (or `demo/`). Not the plugin repository root — the plugin looks for `_chamber/report.json` at the vault root.
-3. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) → Add Beta Plugin → `abm9111/chamber-obsidian` → enable **Chamber Drift**.
+3. Settings → Community plugins → Browse → search **Chamber Drift** → Install → Enable. Listing: [community.obsidian.md/plugins/chamber-drift](https://community.obsidian.md/plugins/chamber-drift).
 4. Open `Retention.md`. The note says 14 days; a conclusion still stands on 30. Click the banner, then try search / next-prev / the status bar.
 
 The JSON in the demo is canned so you can judge the UI. The real loop (pin beliefs, schedule `verify --json` into your own vault) is [Setup](#setup) below. Testers: three questions live in `demo/Welcome.md` and on [Discussions](https://github.com/abm9111/chamber-obsidian/discussions).
@@ -91,9 +91,9 @@ The transport is a file in the vault, so mobile works wherever that file syncs �
 
 ## Install
 
-**Community plugins (once listed):** Settings → Community plugins → Browse → search "Chamber Drift" → Install → Enable. Chamber Drift is not yet in the official registry — a submission is planned; check this repo for current status.
+**Community plugins:** Settings → Community plugins → Browse → search "Chamber Drift" → Install → Enable. Official listing: [community.obsidian.md/plugins/chamber-drift](https://community.obsidian.md/plugins/chamber-drift).
 
-**BRAT (available now):** install [BRAT](https://github.com/TfTHacker/obsidian42-brat), then "Add Beta Plugin" → `abm9111/chamber-obsidian` → Add Plugin → enable Chamber Drift under Community plugins.
+**BRAT** (GitHub builds before the directory picks up a new tag): install [BRAT](https://github.com/TfTHacker/obsidian42-brat), then "Add Beta Plugin" → `abm9111/chamber-obsidian` → Add Plugin → enable Chamber Drift under Community plugins.
 
 ## Settings
 
