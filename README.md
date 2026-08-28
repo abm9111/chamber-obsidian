@@ -4,6 +4,17 @@ Shows which of your conclusions lost support when the notes under them changed.
 
 Chamber Drift is the Obsidian-side half of [Chamber](https://github.com/abm9111/chamber). Chamber's `verify` command hashes the passages a belief is pinned to and reports when one no longer says what it said at pin time; this plugin renders that report inside your vault. It does not run any check itself — see [What it will not do](#what-it-will-not-do).
 
+## Try it in two minutes
+
+You do not need Chamber installed for this.
+
+1. Download [`chamber-drift-demo-vault.zip`](https://github.com/abm9111/chamber-obsidian/releases/latest) from the latest release, or clone this repo and use the [`demo/`](demo/) folder.
+2. In Obsidian: **Open folder as vault** → that unzipped folder (or `demo/`). Not the plugin repository root — the plugin looks for `_chamber/report.json` at the vault root.
+3. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat) → Add Beta Plugin → `abm9111/chamber-obsidian` → enable **Chamber Drift**.
+4. Open `Retention.md`. The note says 14 days; a conclusion still stands on 30. Click the banner, then try search / next-prev / the status bar.
+
+The JSON in the demo is canned so you can judge the UI. The real loop (pin beliefs, schedule `verify --json` into your own vault) is [Setup](#setup) below. Testers: three questions live in `demo/Welcome.md` and on [Discussions](https://github.com/abm9111/chamber-obsidian/discussions).
+
 ## What it shows
 
 Chamber Drift reads one file — the JSON report your own scheduled `chamber verify --json` writes into the vault (see [Setup](#setup)) — and renders it in two places. Nothing here calls Chamber, reaches the network, or writes to your vault; it only parses and displays a report that already exists on disk.

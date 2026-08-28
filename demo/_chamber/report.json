@@ -1,0 +1,71 @@
+{
+  "since": null,
+  "checked": 4,
+  "broken": 2,
+  "degraded": 0,
+  "unsourcedBeliefs": 0,
+  "goneFiles": [
+    {
+      "file": "Archive.md",
+      "passages": 1
+    }
+  ],
+  "relocatedPins": 1,
+  "generatedAt": "2026-08-28T11:40:00.000Z",
+  "database": "demo.sqlite",
+  "beliefs": [
+    {
+      "beliefId": "blf_demo_retention_window",
+      "content": "The trial window is 30 days.",
+      "total": 1,
+      "verified": 0,
+      "failures": [
+        {
+          "refId": "vdoc_demo_retention_p1",
+          "reason": "hash_mismatch",
+          "sourceRef": "Retention.md#p1",
+          "title": "Retention › Window"
+        }
+      ],
+      "relocations": []
+    },
+    {
+      "beliefId": "blf_demo_retention_refunds",
+      "content": "Refunds stay in section 3.",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": [
+        {
+          "refId": "vdoc_demo_retention_p3",
+          "from": "Retention.md#p3",
+          "to": "Retention.md#p2",
+          "title": "Retention › Refunds"
+        }
+      ]
+    },
+    {
+      "beliefId": "blf_demo_onboarding_steps",
+      "content": "Onboarding still has four steps.",
+      "total": 1,
+      "verified": 0,
+      "failures": [
+        {
+          "refId": "vdoc_demo_onboarding_p1",
+          "reason": "hash_mismatch",
+          "sourceRef": "Onboarding.md#p1",
+          "title": "Onboarding › Steps"
+        }
+      ],
+      "relocations": []
+    },
+    {
+      "beliefId": "blf_demo_archive_sla",
+      "content": "The archive note recorded the old SLA.",
+      "total": 1,
+      "verified": 1,
+      "failures": [],
+      "relocations": []
+    }
+  ]
+}
