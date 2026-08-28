@@ -1,11 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { goneFileMatchesFilter, isEventBlindPath, vaultPathsEqual } from "../../src/core/paths";
+import { goneFileMatchesFilter, isEventBlindPath, listDir, listedVaultPath, vaultParentDir, vaultPathsEqual } from "../../src/core/paths";
 
 describe("vaultPathsEqual", () => {
   it("treats backslash and trailing slash as the same path", () => {
     expect(vaultPathsEqual("_chamber/report.json", "_chamber/report.json")).toBe(true);
     expect(vaultPathsEqual("notes\\a.md", "notes/a.md")).toBe(true);
     expect(vaultPathsEqual("notes/a.md/", "notes/a.md")).toBe(true);
+  });
+});
+
+describe("vault parent vs list dir", () => {
+  it("treats vault-root as empty parent and adapter.list(\"/\")", () => {
+    expect(vaultParentDir("report.json")).toBe("");
+    expect(listDir("report.json")).toBe("/");
+    expect(listedVaultPath("/report.sync-conflict-1.json")).toBe("report.sync-conflict-1.json");
+  });
+  it("keeps a nested folder as parent-with-slash and list-without", () => {
+    expect(vaultParentDir("_chamber/report.json")).toBe("_chamber/");
+    expect(listDir("_chamber/report.json")).toBe("_chamber");
+    expect(vaultParentDir("_chamber/report.json/")).toBe("_chamber/");
   });
 });
 

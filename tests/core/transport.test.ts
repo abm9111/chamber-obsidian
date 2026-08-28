@@ -30,6 +30,17 @@ describe("conflictSiblings", () => {
       "_chamber/report.sync-conflict-20260828-101010-ABCDEF.json",
     ]);
   });
+  it("matches vault-root siblings even when list() prefixes a slash", () => {
+    expect(conflictSiblings("report.json", [
+      "/report.json",
+      "/report.sync-conflict-20260828-101010-ABCDEF.json",
+      "report (conflicted copy).json",
+      "notes/report.sync-conflict-1.json",
+    ])).toEqual([
+      "report (conflicted copy).json",
+      "report.sync-conflict-20260828-101010-ABCDEF.json",
+    ]);
+  });
   it("ignores other folders, other stems, numbered copies, and the report itself", () => {
     const files = [
       report,

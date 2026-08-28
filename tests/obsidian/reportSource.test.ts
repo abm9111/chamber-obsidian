@@ -237,6 +237,23 @@ describe("ReportSource", () => {
     if (source.state.kind === "loaded") expect(source.state.conflicts).toEqual([sibling]);
   });
 
+  it("lists vault-root conflict copies when adapter.list(\"/\") prefixes a slash", async () => {
+    let listed: string | undefined;
+    const sibling = "/report.sync-conflict-20260828-101010-ABCDEF.json";
+    const source = makeSource({
+      exists: async () => true,
+      read: async () => JSON.stringify({ beliefs: [] }),
+      stat: async () => ({ mtime: Date.now() }),
+      list: async (dir) => { listed = dir; return { files: ["/report.json", sibling] }; },
+    }, [], { reportPath: "report.json" });
+    await source.refresh();
+    expect(listed).toBe("/");
+    expect(source.state.kind).toBe("loaded");
+    if (source.state.kind === "loaded") {
+      expect(source.state.conflicts).toEqual(["report.sync-conflict-20260828-101010-ABCDEF.json"]);
+    }
+  });
+
   it("lists sync-conflict copies sitting next to the report", async () => {
     const source = makeSource({
       exists: async () => true,

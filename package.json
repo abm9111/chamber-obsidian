@@ -7,11 +7,13 @@
     "build": "node esbuild.config.mjs production",
     "dev": "node esbuild.config.mjs",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "check": "tsc --noEmit && eslint --no-error-on-unmatched-pattern src tests"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
-    "esbuild": "^0.21.0",
+    "@vitest/coverage-v8": "^4.1.11",
+    "esbuild": "^0.25.12",
     "eslint": "^9.0.0",
     "obsidian": "^1.5.7",
     "typescript": "^5.4.0",

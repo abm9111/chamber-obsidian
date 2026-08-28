@@ -2,7 +2,7 @@ import type { TAbstractFile, App } from "obsidian";
 import { MAX_REPORT_BYTES, parseReport, type Report } from "../core/report";
 import { reportAge, type AgeSource } from "../core/staleness";
 import { buildFileIndex, resolveIndex, type ResolvedIndex } from "../core/fileIndex";
-import { isEventBlindPath, normalizeVaultPath } from "../core/paths";
+import { isEventBlindPath, listDir, listedVaultPath, normalizeVaultPath } from "../core/paths";
 import { conflictSiblings, eventTouchesReport, isRegression, looksTruncated } from "../core/transport";
 import type ChamberDriftPlugin from "../main";
 
@@ -223,11 +223,9 @@ export class ReportSource {
    */
   private async listSiblingPaths(adapter: { list?: (dir: string) => Promise<{ files?: string[] }> }, reportPath: string): Promise<string[]> {
     if (typeof adapter.list !== "function") return [];
-    const slash = reportPath.lastIndexOf("/");
-    const dir = slash >= 0 ? reportPath.slice(0, slash) : "/";
     try {
-      const listed = await adapter.list(dir);
-      return listed.files ?? [];
+      const listed = await adapter.list(listDir(reportPath));
+      return (listed.files ?? []).map(listedVaultPath);
     } catch {
       return [];
     }

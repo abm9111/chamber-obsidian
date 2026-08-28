@@ -1,4 +1,4 @@
-import { normalizeVaultPath } from "./paths";
+import { listedVaultPath, normalizeVaultPath, vaultParentDir } from "./paths";
 
 /**
  * Device-truth checks for the report file itself. X practitioner reports
@@ -26,17 +26,16 @@ export function looksTruncated(raw: string): boolean {
  * `report 2.json` are deliberately not matched: too ambiguous to alarm on.
  */
 export function conflictSiblings(reportPath: string, vaultPaths: readonly string[]): string[] {
-  const slash = reportPath.lastIndexOf("/");
-  const dir = slash >= 0 ? reportPath.slice(0, slash + 1) : "";
-  const base = slash >= 0 ? reportPath.slice(slash + 1) : reportPath;
+  const report = listedVaultPath(reportPath);
+  const dir = vaultParentDir(report);
+  const base = report.slice(dir.length);
   const stem = base.replace(/\.[^.]*$/, "").toLowerCase();
   return vaultPaths
+    .map(listedVaultPath)
     .filter((p) => {
-      if (p === reportPath) return false;
-      const pSlash = p.lastIndexOf("/");
-      const pDir = pSlash >= 0 ? p.slice(0, pSlash + 1) : "";
-      if (pDir !== dir) return false;
-      const name = (pSlash >= 0 ? p.slice(pSlash + 1) : p).toLowerCase();
+      if (p === report) return false;
+      if (vaultParentDir(p) !== dir) return false;
+      const name = p.slice(dir.length).toLowerCase();
       return name.startsWith(stem) && name.includes("conflict");
     })
     .sort();
