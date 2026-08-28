@@ -18,7 +18,7 @@ Last-good device truth and a review queue. Display-only still: one vault file, n
 - Oversized reports are refused from `stat.size` before read (5 MB cap; parse still caps UTF-8 bytes).
 - Settings for report path and staleness commit on blur/Enter.
 - CI runs `npm audit --audit-level=high`.
-- esbuild 0.25.12 (clears GHSA-67mh-4wv8-2f99). Coverage measured in CI.
+- esbuild 0.28.2 (clears GHSA-67mh-4wv8-2f99; matches Vite's peer so `npm ci` stays in sync). Coverage measured in CI.
 
 ### Fixed
 
