@@ -12,6 +12,12 @@ Chamber Drift reads one file — the JSON report your own scheduled `chamber ver
 
 **The note banner.** A quiet strip that appears only on notes with drifted or moved pins standing on them. Healthy notes get nothing — a healthy belief's report entry carries no refs to point a banner at, so a reassuring banner on a clean note would be UI for data that doesn't exist. Click the banner to jump into the panel, filtered to that note.
 
+**Desktop status bar.** When there is something to say, the status bar shows `Drift 3` (drifted conclusions), `Drift stale` (report older than the threshold), or `Drift gone` (pinned files missing from disk). Click it to open the panel. A clean, fresh report shows nothing there — same silence-on-healthy rule as the banner.
+
+**Command palette (desktop and mobile).** "Search drifted conclusions" is a fuzzy jump list of broken beliefs. "Open next/previous drifted note" walks the review queue without opening another pane. "Copy drifted note wikilinks" puts `[[paths]]` on the clipboard for a Base or Dataview review table — the plugin still does not write those links into any note.
+
+**Device truth.** The transport is a file, and files lie per-device. The panel names the specific transport failure instead of one generic "unreadable": a report that exists but is **empty** (an iCloud placeholder that was never downloaded), a report that opens like JSON but never closes (**torn mid-write** by a sync engine), **sync-conflict copies** sitting next to the report (two machines writing it — Syncthing's `.sync-conflict-*`, "conflicted copy" names), and a report that goes **backwards** (an older `generatedAt` replacing a newer one, the racing-writers signature). While the file on disk is bad, the last report that loaded cleanly on this device keeps the panel, status bar, note banner, search, and next/prev commands working — the panel labels that copy as last-good rather than flashing to an error mid-sync. And when a newer report lands more than 30 minutes after it was generated, the panel says sync carried it late — that's a different fix than a stopped verify job.
+
 ## Setup
 
 Chamber Drift never runs `chamber` itself. You schedule `chamber verify --json` outside Obsidian, writing its output atomically into the vault; the plugin only watches the file that lands there:
@@ -86,6 +92,7 @@ The transport is a file in the vault, so mobile works wherever that file syncs �
 | Staleness warning (hours) | `48` | Panel shows a warning once the report is older than this. |
 | Show note banner | on | Turns the per-note banner on or off entirely. |
 | Show relocations | on | Turns the collapsed "moved passages" section of the panel on or off. |
+| Show status bar | on | Desktop status bar item. Hidden on a clean, fresh report. |
 
 ## What it will not do
 
@@ -94,8 +101,10 @@ Chamber checks; this shows. Chamber Drift never runs `chamber verify`, never sch
 A few limits worth knowing before you rely on it:
 
 - The note banner decorates only the **active** view. Open the same drifted note in a split pane and the banner follows focus rather than showing on both panes at once.
+- Clicking a broken pin opens that note and, when Chamber supplied a title, jumps the cursor to that heading if the text is still in the file. There is still no gutter or line decoration — a title that no longer exists is a silent no-op, not a fake highlight.
 - Staleness normally reads `generatedAt` from inside the report. For reports written by Chamber versions that predate that field, it falls back to the report file's modified time and labels the age "(approx — from file time)" — a synced file's mtime reflects the sync engine, not when `verify` actually ran, so treat that label as a hint rather than a measurement.
-- No passage- or line-level decoration in the editor, no "verify now" button, no reading of Chamber's SQLite database. The report file is the only contract this plugin has with Chamber.
+- No "verify now" button, no reading of Chamber's SQLite database. The report file is the only contract this plugin has with Chamber.
+- Device-truth warnings name transport failures but never fix them: no restoring files, no resolving sync conflicts, no deleting conflict copies. Arrival-lag and backwards-report checks are per-session — the first report seen after startup asserts neither.
 
 See Chamber's [`docs/KNOWN_LIMITATIONS.md`](https://github.com/abm9111/chamber/blob/main/docs/KNOWN_LIMITATIONS.md) for what Chamber itself does and doesn't guarantee — everything this plugin shows is downstream of those guarantees. Chamber is MIT-licensed, as is this plugin: [github.com/abm9111/chamber](https://github.com/abm9111/chamber).
 

@@ -1,8 +1,13 @@
-import { ItemView, Platform, TFile, WorkspaceLeaf } from "obsidian";
+import { ItemView, Platform, WorkspaceLeaf } from "obsidian";
 import type ChamberDriftPlugin from "../main";
-import { vaultPathForRef } from "../core/fileIndex";
+import { vaultPathForRef, type ResolvedIndex } from "../core/fileIndex";
 import { goneFileMatchesFilter } from "../core/paths";
 import { excerpt } from "../core/text";
+import { reportAge, type AgeSource } from "../core/staleness";
+import { ARRIVAL_LAG_MIN_MS } from "../core/transport";
+import type { Report } from "../core/report";
+import type { LastGood } from "./reportSource";
+import { openVaultPin } from "./openPin";
 
 export const VIEW_TYPE_DRIFT = "chamber-drift-panel";
 
@@ -15,13 +20,20 @@ export const VIEW_TYPE_DRIFT = "chamber-drift-panel";
 const CRON_LINE =
   'chamber verify --json > "<vault>/_chamber/.report.tmp" ; [ -s "<vault>/_chamber/.report.tmp" ] && mv "<vault>/_chamber/.report.tmp" "<vault>/_chamber/report.json"';
 
+function durText(ms: number): string {
+  const h = ms / 3600_000;
+  return h < 1 ? `${Math.max(1, Math.round(ms / 60_000))} min`
+    : h < 48 ? `${Math.round(h)} h` : `${Math.round(h / 24)} d`;
+}
+
 function ageText(ms: number | null, source: string): string {
   if (ms === null) return "age unknown";
-  const h = ms / 3600_000;
-  const t = h < 1 ? `${Math.max(1, Math.round(ms / 60_000))} min ago`
-    : h < 48 ? `${Math.round(h)} h ago` : `${Math.round(h / 24)} d ago`;
+  const t = `${durText(ms)} ago`;
   return source === "mtime" ? `${t} (approx — from file time)` : t;
 }
+
+/** Device-truth verdicts rendered only for the CURRENT report — a last-good rerender omits them. */
+interface DeviceTruth { conflicts: string[]; arrivalLagMs: number | null; regressed: boolean }
 
 export class DriftPanel extends ItemView {
   private fileFilter: string | null = null;
@@ -42,9 +54,8 @@ export class DriftPanel extends ItemView {
   }
   setFileFilter(path: string | null): void { this.fileFilter = path; this.render(); }
 
-  private openVaultFile(path: string): void {
-    const f = this.app.vault.getAbstractFileByPath(path);
-    if (f instanceof TFile) void this.app.workspace.getLeaf(false).openFile(f);
+  private openVaultFile(path: string, title?: string | null): void {
+    void openVaultPin(this.app, path, title);
   }
 
   private render(): void {
@@ -58,26 +69,74 @@ export class DriftPanel extends ItemView {
       el.createEl("p", { text: `Looked for: ${this.plugin.settings.reportPath}` });
       el.createEl("p", { text: "Chamber writes it on a schedule, outside Obsidian:" });
       el.createEl("pre", { text: CRON_LINE });
-      // Platform-aware setup nudge — first-party Sync ships with non-md types off.
+      // Platform-aware setup nudges — first-party Sync ships with non-md types
+      // off, and iCloud eviction makes a synced file empty or invisible.
       if (Platform.isMobile) {
         el.createEl("p", { text: "On mobile with Obsidian Sync: enable Settings → Sync → “Sync all other types”, or the report never arrives." });
+        el.createEl("p", { text: "On iCloud: set the vault folder to “Keep Downloaded” — an evicted file shows up empty or not at all." });
       }
+      this.renderConflicts(el, s.conflicts);
+      this.renderLastGood(el, s.lastGood);
       return;
     }
     if (s.kind === "error") {
-      el.createEl("h4", { text: "Report unreadable" });
-      el.createEl("p", { text: s.error });
+      // Three failures that used to collapse into one "unreadable": an empty
+      // file (cloud placeholder / eviction), a torn file (sync engine caught
+      // mid-write), and genuinely malformed JSON. Different fixes — name them.
+      const heading = s.reason === "empty" ? "Report file is empty on this device"
+        : s.reason === "truncated" ? "Report looks torn mid-write"
+          : "Report unreadable";
+      el.createEl("h4", { text: heading });
+      if (s.reason === "empty") {
+        el.createEl("p", { text: "The file exists here but has no bytes. The scheduled one-liner's [ -s ] guard prevents an empty write at the source, so this is usually transport: an iCloud placeholder that was never downloaded (“Keep Downloaded” off) or a sync engine mid-transfer." });
+      } else if (s.reason === "truncated") {
+        el.createEl("p", { text: "The file starts like JSON but never closes — usually a sync engine caught mid-write. The panel retries automatically when the file changes and on the next poll." });
+      } else {
+        el.createEl("p", { text: s.error });
+      }
       el.createEl("p", { text: `Path: ${this.plugin.settings.reportPath}` });
+      this.renderConflicts(el, s.conflicts);
+      this.renderLastGood(el, s.lastGood);
       return;
     }
 
-    const { report, ageMs, ageSource, resolved } = s;
+    this.renderLoaded(el, s.report, s.resolved, s.ageMs, s.ageSource, {
+      conflicts: s.conflicts, arrivalLagMs: s.arrivalLagMs, regressed: s.regressed,
+    });
+  }
+
+  private renderConflicts(el: HTMLElement, conflicts: string[]): void {
+    if (conflicts.length === 0) return;
+    el.createDiv({
+      cls: "chamber-drift-stale",
+      text: `Sync-conflict ${conflicts.length === 1 ? "copy" : "copies"} of the report: ${conflicts.join(", ")} — two devices are writing it. Only ${this.plugin.settings.reportPath} is read.`,
+    });
+  }
+
+  private renderLastGood(el: HTMLElement, lastGood: LastGood | null): void {
+    if (!lastGood) return;
+    // A torn or evicted file must not blank the panel: the last cleanly-loaded
+    // report stays visible, labeled as such, until a good copy lands.
+    el.createDiv({ cls: "chamber-drift-lastgood", text: "Last report that loaded cleanly on this device:" });
+    const age = reportAge(lastGood.report.generatedAt, lastGood.mtime, Date.now());
+    this.renderLoaded(el, lastGood.report, lastGood.resolved, age.ms, age.source, null);
+  }
+
+  private renderLoaded(el: HTMLElement, report: Report, resolved: ResolvedIndex, ageMs: number | null, ageSource: AgeSource, dt: DeviceTruth | null): void {
     const header = el.createDiv({ cls: "chamber-drift-header" });
     header.createDiv({
       text: `checked ${ageText(ageMs, ageSource)} · ${report.checked ?? report.beliefs.length} conclusions · ` +
         `${report.broken ?? 0} broken · ${report.degraded ?? 0} degraded · ${report.relocatedPins ?? 0} moved`,
     });
     if (report.database) header.createDiv({ cls: "chamber-drift-db", text: report.database.split("/").pop() ?? "" });
+
+    if (dt?.regressed) {
+      el.createDiv({ cls: "chamber-drift-stale", text: "This report is older than the one loaded before it — two verify jobs writing the same file, or a sync conflict resolved to the stale side." });
+    }
+    if (dt) this.renderConflicts(el, dt.conflicts);
+    if (dt && dt.arrivalLagMs !== null && dt.arrivalLagMs > ARRIVAL_LAG_MIN_MS) {
+      el.createDiv({ cls: "chamber-drift-transport", text: `Became visible here ${durText(dt.arrivalLagMs)} after it was generated — sync carried it late; verify itself ran.` });
+    }
 
     if (ageMs !== null && ageMs > this.plugin.settings.stalenessHours * 3600_000) {
       el.createDiv({ cls: "chamber-drift-stale", text: `Report is ${ageText(ageMs, ageSource)} — is the scheduled verify running?` });
@@ -124,7 +183,7 @@ export class DriftPanel extends ItemView {
           : f.reason === "hash_mismatch"
             ? `hash_mismatch: ${f.sourceRef ?? f.refId}${f.title ? ` — now holds: ${f.title}` : ""}`
             : `${f.reason}: ${f.sourceRef ?? f.refId}`;
-        if (vp) { const a = chip.createEl("a", { text: label }); a.onclick = () => this.openVaultFile(vp); }
+        if (vp) { const a = chip.createEl("a", { text: label }); a.onclick = () => this.openVaultFile(vp, f.title); }
         else chip.createSpan({ text: `${label} (outside this vault)` });
       }
     }

@@ -28,12 +28,12 @@ export class NoteBanner {
   private update(): void {
     this.detach();
     if (!this.plugin.settings.showBanner) return;
-    const s = this.plugin.source.state;
-    if (s.kind !== "loaded") return;
+    const cur = this.plugin.source.current();
+    if (!cur) return;
     const view = this.plugin.app.workspace.getActiveViewOfType(MarkdownView);
     const file = view?.file;
     if (!view || !file) return;
-    const entry = s.resolved.byVaultPath.get(file.path);
+    const entry = cur.resolved.byVaultPath.get(file.path);
     if (!entry || (entry.drifted.length === 0 && entry.moved.length === 0)) return;
 
     const parts: string[] = [];

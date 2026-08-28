@@ -107,4 +107,50 @@ each item, so this file is the record — not a separate log.
     drifted note, banner-to-panel navigation. If using Obsidian Sync,
     confirm "Sync all other types" is enabled first (see the README's
     Mobile section), and note here which sync mechanism carried the
-    report (Obsidian Sync / iCloud / Syncthing / other).
+    report (Obsidian Sync / iCloud / Syncthing / other). Then run
+    "Search drifted conclusions" and "Open next drifted note" from the
+    command palette — both must work without a status bar.
+
+13. **Status bar (desktop).** With a drifted report loaded, expect
+    `Drift N` in the status bar; click it to open the panel. Open a
+    clean report (or wait until none of the counts apply) and expect
+    the item to disappear. Flip "Show status bar" off and confirm it
+    stays gone even with drift.
+
+14. **Search and next/prev.** Command palette → "Search drifted
+    conclusions": pick a hit, expect the note to open (cursor on the
+    Chamber title when that text still exists) and the panel to filter
+    to that note. "Open next drifted note" / "Open previous drifted
+    note" should cycle the alarmed notes without yanking focus into
+    the panel. "Copy drifted note wikilinks" copies `[[paths]]` and
+    shows a count Notice.
+
+15. **Empty report keeps the last good one.** With a loaded report,
+    truncate the file to zero bytes (`: > "<vault>/_chamber/report.json"`).
+    Expect the panel to switch to "Report file is empty on this device"
+    with the iCloud/transport explanation — and, below it, "Last report
+    that loaded cleanly on this device:" with the previous content still
+    rendered. The note banner and desktop status bar keep showing the
+    last-good drift (they do not go blank for the empty-file window).
+    Restore the report; expect normal recovery with no reload.
+
+16. **Torn file is named, not blamed on Chamber.** Write half a report
+    (`head -c 200 report.json > .t && mv .t report.json`). Expect the
+    "Report looks torn mid-write" state (not "not valid JSON"), plus the
+    last-good block. Restore and confirm recovery.
+
+17. **Conflict copy warning.** Create a sibling
+    `report.sync-conflict-20260828-101010-ABCDEF.json` next to the
+    report. Expect a warning strip naming the copy in the panel and
+    "Drift conflict" in the status bar once no real drift is present.
+    Delete the copy; expect both to clear on the create/delete event
+    (not only the 5-minute poll). Deleting the report file itself should
+    switch to the missing state with last-good still rendered, same
+    live-update rule.
+
+18. **Backwards report.** With the panel open, overwrite the report
+    with an older copy (earlier `generatedAt`). Expect the "older than
+    the one loaded before it" warning. Overwrite with a newer report;
+    expect the warning to clear — and, if the newer report's
+    `generatedAt` is >30 min in the past, the "became visible here …
+    after it was generated" transport line.

@@ -6,12 +6,14 @@ export interface ChamberDriftSettings {
   stalenessHours: number;  // warn past this
   showBanner: boolean;
   showRelocations: boolean;
+  showStatusBar: boolean;
 }
 export const DEFAULT_SETTINGS: ChamberDriftSettings = {
   reportPath: "_chamber/report.json",
   stalenessHours: 48,
   showBanner: true,
   showRelocations: true,
+  showStatusBar: true,
 };
 
 export class ChamberDriftSettingTab extends PluginSettingTab {
@@ -62,5 +64,12 @@ export class ChamberDriftSettingTab extends PluginSettingTab {
       t.setValue(this.plugin.settings.showRelocations).onChange(async (v) => {
         this.plugin.settings.showRelocations = v; await this.plugin.saveSettings(); this.plugin.source.notify();
       }));
+    new Setting(containerEl)
+      .setName("Show status bar")
+      .setDesc("Desktop only. Hidden when the report is clean and fresh — no extra chrome on a healthy vault.")
+      .addToggle((t) =>
+        t.setValue(this.plugin.settings.showStatusBar).onChange(async (v) => {
+          this.plugin.settings.showStatusBar = v; await this.plugin.saveSettings(); this.plugin.source.notify();
+        }));
   }
 }

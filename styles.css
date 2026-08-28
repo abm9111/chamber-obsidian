@@ -10,3 +10,6 @@
 .chamber-drift-moved, .chamber-drift-gone { margin-top: 10px; font-size: var(--font-ui-small); color: var(--text-muted); }
 .chamber-drift-clean { color: var(--text-success); }
 .chamber-drift-banner { background: var(--background-secondary); border-left: 3px solid var(--text-error); padding: 6px 10px; margin-bottom: 8px; font-size: var(--font-ui-small); }
+.chamber-drift-status { cursor: pointer; }
+.chamber-drift-transport { font-size: var(--font-ui-smaller); color: var(--text-muted); margin: 4px 0; }
+.chamber-drift-lastgood { margin-top: 14px; padding-top: 8px; border-top: 2px solid var(--background-modifier-border); font-weight: 600; font-size: var(--font-ui-small); color: var(--text-muted); }
