@@ -6,6 +6,24 @@ Chamber Drift is the Obsidian-side half of [Chamber](https://github.com/abm9111/
 
 That is the same failure people hit as Sync history, a renamed heading under an embed, a deleted source, or two devices writing the report: a conclusion outlived its evidence. Chamber names the cause. It does not become a second Sync, a Bases formula, or a broken-links crawler.
 
+## Using an AI agent on your vault?
+
+This plugin shows drift. Checking what an AI agent tells you about your notes
+is Chamber's other half, and it runs outside Obsidian. If you point Claude Code
+(or any MCP host) at your vault, add Chamber's MCP server and it gets
+`chamber_check`: before stating a fact from a note, the agent sends the claim
+and the note, and Chamber answers `SUPPORTED` or `TERMS_ABSENT` (naming what
+the note does not contain), or `STALE` if the note changed since it was indexed.
+
+```bash
+npx -y @bu7umaid/chamber ingest /path/to/your/vault
+claude mcp add -s user chamber -- npx -y @bu7umaid/chamber mcp
+```
+
+It checks that the numbers, names, file names and counts in a claim are in the
+note it cites — not whether the sentence means what the note means. Desktop
+only (Node 23.6+). Details: [Use it from an AI coding agent](https://github.com/abm9111/chamber#use-it-from-an-ai-coding-agent).
+
 ## Try it in two minutes
 
 You do not need Chamber installed for this.
